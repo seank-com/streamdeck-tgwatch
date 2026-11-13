@@ -1,0 +1,27 @@
+{
+  "name": "telegram-watch",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && node build.mjs",
+    "watch": "node build.mjs --watch",
+    "link": "streamdeck link com.seank.telegram-watch.sdPlugin",
+    "restart": "streamdeck restart com.seank.telegram-watch",
+    "pack": "npm run build && streamdeck pack com.seank.telegram-watch.sdPlugin"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^3.0.4",
+    "@elgato/utils": "^0.6.2",
+    "qrcode": "^1.5.4",
+    "telegram": "^2.26.22"
+  },
+  "devDependencies": {
+    "@elgato/cli": "^1.10.4",
+    "@types/node": "^24.1.0",
+    "@types/qrcode": "^1.5.6",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
+  }
+}

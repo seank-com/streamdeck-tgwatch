@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+	<head lang="en">
+		<title>Telegram Watch</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<style>
+			.hidden { display: none; }
+			#status { font-size: 9pt; line-height: 1.4; color: #bbb; padding: 4px 0; }
+			#status.err { color: #ff6b6b; }
+			.help { font-size: 8.5pt; color: #999; }
+			.help a { color: #2aabee; }
+		</style>
+	</head>
+
+	<body>
+		<!-- ── Telegram account (shared by every key) ───────────────────────── -->
+		<sdpi-heading>Telegram account</sdpi-heading>
+		<sdpi-item label="Status"><div id="status">Checking…</div></sdpi-item>
+
+		<div id="creds" class="hidden">
+			<sdpi-item label="API ID"><sdpi-textfield id="apiId" placeholder="12345678"></sdpi-textfield></sdpi-item>
+			<sdpi-item label="API hash"><sdpi-password id="apiHash"></sdpi-password></sdpi-item>
+			<sdpi-item><sdpi-button id="qrBtn">Log in with QR code (recommended)</sdpi-button></sdpi-item>
+			<sdpi-item label="…or phone"><sdpi-textfield id="phone" placeholder="+1 555 123 4567"></sdpi-textfield></sdpi-item>
+			<sdpi-item><sdpi-button id="loginBtn">Send login code</sdpi-button></sdpi-item>
+			<sdpi-item>
+				<div class="help">
+					Get an API ID &amp; hash at <a href="#" id="tgLink">my.telegram.org</a> → API development tools.
+					They're stored only on this computer, with your session.
+				</div>
+			</sdpi-item>
+		</div>
+
+		<div id="qrBox" class="hidden">
+			<sdpi-item><img id="qrImg" alt="Login QR code" style="width: 200px; height: 200px; background: #fff; border-radius: 6px" /></sdpi-item>
+			<sdpi-item><sdpi-button id="qrCancelBtn">Cancel</sdpi-button></sdpi-item>
+		</div>
+
+		<div id="ask" class="hidden">
+			<sdpi-item label="Code"><sdpi-password id="answer"></sdpi-password></sdpi-item>
+			<sdpi-item>
+				<sdpi-button id="submitBtn">Submit</sdpi-button>
+				<sdpi-button id="cancelBtn">Cancel</sdpi-button>
+			</sdpi-item>
+		</div>
+
+		<div id="loggedIn" class="hidden">
+			<sdpi-item><sdpi-button id="logoutBtn">Log out</sdpi-button></sdpi-item>
+		</div>
+
+		<!-- ── This key ─────────────────────────────────────────────────────── -->
+		<div id="keySettings" class="hidden">
+			<sdpi-heading>This key</sdpi-heading>
+			<sdpi-item label="Chat">
+				<sdpi-select setting="chatId" datasource="getChats" hot-reload show-refresh loading="Loading chats…" placeholder="Pick a DM or group"></sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="Alert when">
+				<sdpi-select setting="mode" default="reply">
+					<option value="reply">Last message isn't mine (needs reply)</option>
+					<option value="unread">There are unread messages</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="On press">
+				<sdpi-select setting="press" default="open">
+					<option value="open">Open chat in Telegram</option>
+					<option value="read">Mark as read</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="Blink">
+				<sdpi-checkbox setting="flash" label="Blink while alerting"></sdpi-checkbox>
+			</sdpi-item>
+		</div>
+
+		<script>
+			const client = SDPIComponents.streamDeckClient;
+			const $ = (id) => document.getElementById(id);
+			const send = (payload) => client.send("sendToPlugin", payload);
+			const show = (id, on) => $(id).classList.toggle("hidden", !on);
+
+			function renderStatus(s) {
+				const text = {
+					needsCredentials: "Not logged in.",
+					connecting: "Connecting…",
+					awaitingQr: "Scan to log in.",
+					awaitingCode: "Waiting for code.",
+					awaitingPassword: "Waiting for 2FA password.",
+					ready: `Logged in as ${s.me ?? "you"}.`,
+					error: "Error.",
+				}[s.state];
+				$("status").textContent = s.message && s.state !== "ready" ? `${text} ${s.message}` : text;
+				$("status").classList.toggle("err", s.state === "error");
+
+				show("creds", s.state === "needsCredentials" || s.state === "error");
+				show("qrBox", s.state === "awaitingQr");
+				if (s.qr) $("qrImg").src = s.qr;
+				show("ask", s.state === "awaitingCode" || s.state === "awaitingPassword");
+				show("loggedIn", s.state === "ready");
+				show("keySettings", s.state === "ready");
+				document.querySelector('#ask sdpi-item[label]').setAttribute("label", s.state === "awaitingPassword" ? "Password" : "Code");
+			}
+
+			client.sendToPropertyInspector.subscribe((ev) => {
+				if (ev.payload?.event === "status") renderStatus(ev.payload);
+			});
+
+			$("loginBtn").addEventListener("click", () =>
+				send({ event: "login", apiId: $("apiId").value, apiHash: $("apiHash").value, phone: $("phone").value }),
+			);
+			$("qrBtn").addEventListener("click", () =>
+				send({ event: "loginQr", apiId: $("apiId").value, apiHash: $("apiHash").value }),
+			);
+			$("qrCancelBtn").addEventListener("click", () => send({ event: "cancel" }));
+			$("submitBtn").addEventListener("click", () => {
+				send({ event: "submit", value: $("answer").value });
+				$("answer").value = "";
+			});
+			$("cancelBtn").addEventListener("click", () => send({ event: "cancel" }));
+			$("logoutBtn").addEventListener("click", () => send({ event: "logout" }));
+			$("tgLink").addEventListener("click", (e) => {
+				e.preventDefault();
+				client.send("openUrl", { url: "https://my.telegram.org" });
+			});
+
+			send({ event: "status" });
+		</script>
+	</body>
+</html>

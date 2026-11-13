@@ -1,0 +1,41 @@
+{
+	"Name": "Telegram Watch",
+	"Version": "0.1.0.0",
+	"Author": "Sean Kelly",
+	"Actions": [
+		{
+			"Name": "Watch Chat",
+			"UUID": "com.seank.telegram-watch.chat",
+			"Icon": "imgs/actions/chat/icon",
+			"Tooltip": "Shows a Telegram chat's photo and lights up when a message is waiting for your reply.",
+			"PropertyInspectorPath": "ui/chat-watch.html",
+			"Controllers": ["Keypad"],
+			"SupportedInMultiActions": false,
+			"States": [
+				{
+					"Image": "imgs/actions/chat/key",
+					"ShowTitle": true,
+					"TitleAlignment": "bottom"
+				}
+			]
+		}
+	],
+	"Category": "Telegram Watch",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "One key per Telegram DM or group. The key shows the chat's photo and turns red when someone is waiting on a reply.",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{ "Platform": "mac", "MinimumVersion": "12" },
+		{ "Platform": "windows", "MinimumVersion": "10" }
+	],
+	"Nodejs": {
+		"Version": "24",
+		"Debug": "enabled"
+	},
+	"UUID": "com.seank.telegram-watch"
+}
