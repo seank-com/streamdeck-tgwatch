@@ -14,9 +14,17 @@ const options = {
 	target: "node20",
 	format: "esm",
 	sourcemap: watch ? "inline" : false,
-	// GramJS is CommonJS; give the ESM bundle a real `require` for Node built-ins.
+	// teleproto is CommonJS: give the ESM bundle the CJS globals it expects
+	// (`require` for Node built-ins, `__filename`/`__dirname` for its optional native-addon lookup).
 	banner: {
-		js: 'import { createRequire as __cr } from "node:module"; const require = __cr(import.meta.url);',
+		js: [
+			'import { createRequire as __cr } from "node:module";',
+			'import { fileURLToPath as __fu } from "node:url";',
+			'import { dirname as __dn } from "node:path";',
+			"const require = __cr(import.meta.url);",
+			"const __filename = __fu(import.meta.url);",
+			"const __dirname = __dn(__filename);",
+		].join(" "),
 	},
 	logLevel: "info",
 	plugins: [

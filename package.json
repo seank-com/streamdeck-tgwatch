@@ -15,7 +15,7 @@
     "@elgato/streamdeck": "^3.0.4",
     "@elgato/utils": "^0.6.2",
     "qrcode": "^1.5.4",
-    "telegram": "^2.26.22"
+    "teleproto": "^1.233.0"
   },
   "devDependencies": {
     "@elgato/cli": "^1.10.4",
@@ -23,5 +23,8 @@
     "@types/qrcode": "^1.5.6",
     "esbuild": "^0.25.0",
     "typescript": "^5.6.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
   }
 }

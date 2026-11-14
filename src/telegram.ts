@@ -5,12 +5,12 @@ import path from "node:path";
 
 import streamDeck from "@elgato/streamdeck";
 import QRCode from "qrcode";
-import { Api, TelegramClient, utils } from "telegram";
-import { NewMessage, Raw, type NewMessageEvent } from "telegram/events/index.js";
-import { Logger } from "telegram/extensions/index.js";
-import { LogLevel } from "telegram/extensions/Logger.js";
-import { returnBigInt } from "telegram/Helpers.js";
-import { StringSession } from "telegram/sessions/index.js";
+import { Api, TelegramClient, utils } from "teleproto";
+import { NewMessage, Raw, type NewMessageEvent } from "teleproto/events/index.js";
+import { Logger } from "teleproto/extensions/index.js";
+import { LogLevel } from "teleproto/extensions/Logger.js";
+import { returnBigInt } from "teleproto/Helpers.js";
+import { StringSession } from "teleproto/sessions/index.js";
 
 /** Where the API credentials and login session live (outside the plugin folder, so updates keep you logged in). */
 const CONFIG_DIR = path.join(os.homedir(), ".streamdeck-telegram-watch");
@@ -250,7 +250,7 @@ class TelegramService extends EventEmitter {
 		try {
 			const input = await client.getInputEntity(returnBigInt(id));
 			const res = await client.invoke(
-				new Api.messages.GetPeerDialogs({ peers: [new Api.InputDialogPeer({ peer: input })] }),
+				new Api.messages.GetPeerDialogs({ peers: [input] }), // teleproto wraps it in InputDialogPeer
 			);
 			const dialog = res.dialogs[0];
 			if (!(dialog instanceof Api.Dialog)) return;

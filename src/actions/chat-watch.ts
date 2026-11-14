@@ -182,7 +182,7 @@ function openExternal(url: string): void {
 		process.platform === "darwin"
 			? ["open", [url]]
 			: process.platform === "win32"
-				? ["explorer.exe", [url]] // avoids cmd.exe mangling the "&" in links
+				? ["rundll32.exe", ["url.dll,FileProtocolHandler", url]] // dispatches to the registered tg:// handler
 				: ["xdg-open", [url]];
 	const child = spawn(cmd, args, { detached: true, stdio: "ignore" });
 	child.on("error", (err) => streamDeck.logger.error(`Couldn't open ${url}: ${err.message}`));
