@@ -27,6 +27,8 @@ const options = {
 		].join(" "),
 	},
 	logLevel: "info",
+	// Stamped into the startup log line so you can tell which build is running.
+	define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
 	plugins: [
 		{
 			name: "restart-streamdeck",

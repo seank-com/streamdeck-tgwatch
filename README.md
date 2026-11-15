@@ -44,11 +44,13 @@ If the other side always answers right after you (e.g. agents/bots), **There are
 
 ```bash
 npm run watch     # rebuild + restart the plugin on every save
-npm run restart   # restart the plugin manually
+npm run restart   # restart the plugin manually (see note below)
 npm run pack      # build a .streamDeckPlugin file for a GitHub Release
 ```
 
-Logs are in `com.seank.telegram-watch.sdPlugin/logs/`.
+Logs are in `com.seank.telegram-watch.sdPlugin/logs/`; each run starts with a `Telegram Watch starting (built …)` line showing which build is loaded.
+
+If that line doesn't show your latest build after `npm run restart`, Stream Deck didn't really reload the plugin (it can report success anyway). Quit Stream Deck from its tray icon and reopen it.
 
 ## How it works
 
@@ -62,4 +64,4 @@ Logs are in `com.seank.telegram-watch.sdPlugin/logs/`.
 - Credentials and the login session are stored in `~/.streamdeck-telegram-watch/config.json` (on Windows, `%USERPROFILE%\.streamdeck-telegram-watch\`), not in Stream Deck settings or the repo. That session is full access to your Telegram account — treat it like a password. **Log out** in the key settings revokes it. Each computer needs its own login.
 - On Windows, pressing a key opens the chat through the registered `tg://` handler. If nothing happens, check that `Win+R` → `tg://resolve?domain=telegram` opens Telegram Desktop.
 - Legacy basic groups have no deep link, so pressing **Open** on one marks it read instead (the key shows a checkmark). Supergroups and DMs open normally.
-- Photos are fetched once per plugin start; restart the plugin to pick up a changed photo.
+- Profile photos are re-checked every 60 seconds, so a changed photo shows up on its key within about a minute.

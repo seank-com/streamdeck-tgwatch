@@ -3,8 +3,12 @@ import streamDeck from "@elgato/streamdeck";
 import { ChatWatch } from "./actions/chat-watch.js";
 import { telegram } from "./telegram.js";
 
+declare const __BUILD_TIME__: string;
+
 // Don't use "trace": it would log the login code and session traffic.
 streamDeck.logger.setLevel("info");
+
+streamDeck.logger.info(`Telegram Watch starting (built ${__BUILD_TIME__})`);
 
 const chatWatch = new ChatWatch();
 streamDeck.actions.registerAction(chatWatch);

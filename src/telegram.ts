@@ -32,6 +32,8 @@ export type ChatInfo = {
 	channelId?: string;
 	/** Profile photo as base64 JPEG, if the chat has one. */
 	photo?: string;
+	/** Telegram's id for that photo, so we only re-download when it changes. */
+	photoId?: string;
 	/** Last message in the chat is from someone else (not a service message). */
 	waitingReply: boolean;
 	unread: number;
@@ -243,8 +245,11 @@ class TelegramService extends EventEmitter {
 		if (this.status.state === "ready") await this.#loadDialogs();
 	}
 
-	/** Re-query a chat's top message + unread count (and photo/title the first time). */
-	async refresh(id: string): Promise<void> {
+	/**
+	 * Re-query a chat's top message + unread count. Title/photo are loaded the first time,
+	 * and re-checked when `checkMeta` is set (the 60-second poll), so photo changes show up.
+	 */
+	async refresh(id: string, checkMeta = false): Promise<void> {
 		const client = this.#client;
 		if (!client || this.status.state !== "ready") return;
 		try {
@@ -270,7 +275,7 @@ class TelegramService extends EventEmitter {
 			info.unreadMark = !!dialog.unreadMark;
 			info.topMessageId = dialog.topMessage;
 
-			if (!info.loaded) {
+			if (!info.loaded || checkMeta) {
 				const entity = await client.getEntity(input);
 				info.title = utils.getDisplayName(entity) || "Chat";
 				if (entity instanceof Api.User) {
@@ -284,11 +289,24 @@ class TelegramService extends EventEmitter {
 				} else {
 					info.kind = "group";
 				}
-				try {
-					const photo = await client.downloadProfilePhoto(entity, { isBig: false });
-					if (Buffer.isBuffer(photo) && photo.length > 0) info.photo = photo.toString("base64");
-				} catch (err) {
-					streamDeck.logger.warn(`No photo for ${id}: ${errorText(err)}`);
+				const pic = "photo" in entity ? entity.photo : undefined;
+				const photoId = pic && "photoId" in pic ? pic.photoId.toString() : undefined;
+				if (!info.loaded) streamDeck.logger.info(`Watching "${info.title}" (${id}), photo ${photoId ?? "none"}`);
+				else if (photoId !== info.photoId)
+					streamDeck.logger.info(`Photo id for "${info.title}" changed: ${info.photoId ?? "none"} → ${photoId ?? "none"}`);
+				else streamDeck.logger.debug(`Photo unchanged for "${info.title}" (${photoId ?? "none"})`);
+				if (!photoId) {
+					info.photo = info.photoId = undefined; // no photo (or removed) → initials
+				} else if (photoId !== info.photoId) {
+					try {
+						const photo = await client.downloadProfilePhoto(entity, { isBig: false });
+						info.photo = Buffer.isBuffer(photo) && photo.length > 0 ? photo.toString("base64") : undefined;
+						info.photoId = photoId;
+						if (info.loaded) streamDeck.logger.info(`Photo changed for ${info.title}`);
+					} catch (err) {
+						// Keep the current photo; photoId is unchanged, so the next poll retries.
+						streamDeck.logger.warn(`No photo for ${id}: ${errorText(err)}`);
+					}
 				}
 				info.loaded = true;
 			}
@@ -356,7 +374,7 @@ class TelegramService extends EventEmitter {
 		}, new Raw({}));
 
 		clearInterval(this.#poll);
-		this.#poll = setInterval(() => this.#watchCount.forEach((_, id) => void this.refresh(id)), POLL_MS);
+		this.#poll = setInterval(() => this.#watchCount.forEach((_, id) => void this.refresh(id, true)), POLL_MS);
 
 		await Promise.all([...this.#watchCount.keys()].map((id) => this.refresh(id)));
 	}
